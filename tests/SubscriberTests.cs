@@ -6,6 +6,7 @@
 using TeachingDeviceManagement.Devices;
 using TeachingDeviceManagement.Enums;
 using TeachingDeviceManagement.Events;
+using TeachingDeviceManagement.Exceptions;
 using TeachingDeviceManagement.Services;
 using Xunit;
 
@@ -69,5 +70,21 @@ public class SubscriberTests
 
         subscriber.HandleAlert(null, criticalAlert);
         Assert.Equal(1, callCount); // Critical thỏa điều kiện filter
+    }
+
+    [Fact]
+    public void FilteredAlertSubscriber_NullFilterOrAction_ShouldThrowArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new FilteredAlertSubscriber(null!, alert => { }));
+        Assert.Throws<ArgumentNullException>(() => new FilteredAlertSubscriber(alert => true, null!));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void InvalidDeviceReadingException_NullOrWhitespaceDeviceId_ShouldThrowArgumentException(string? invalidDeviceId)
+    {
+        Assert.Throws<ArgumentException>(() => new InvalidDeviceReadingException(invalidDeviceId!, 50));
     }
 }

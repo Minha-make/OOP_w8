@@ -46,4 +46,30 @@ public class AirConditionerRemoteTests
         // Assert
         Assert.Equal(0, alertCount);
     }
+
+    [Fact]
+    public void UpdateResponseState_FullTransitionSequence_ShouldRaiseCriticalOnlyOnResponsiveToUnresponsive()
+    {
+        // Sequence: true (ban đầu) -> false (báo) -> false (không lặp) -> true (bình thường) -> false (báo lần 2)
+        var ac = new AirConditionerRemote("AC-01", "Điều khiển điều hòa", "P201");
+        var alerts = new List<DeviceAlertEventArgs>();
+        ac.AlertRaised += (sender, e) => alerts.Add(e);
+
+        ac.UpdateResponseState(false); // 1. Critical
+        ac.UpdateResponseState(false); // 2. Bỏ qua
+        ac.UpdateResponseState(true);  // 3. Phục hồi
+        ac.UpdateResponseState(false); // 4. Critical
+
+        Assert.Equal(2, alerts.Count);
+        Assert.All(alerts, a => Assert.Equal(AlertSeverity.Critical, a.Severity));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_NullOrWhitespaceRoom_ShouldThrowArgumentException(string? invalidRoom)
+    {
+        Assert.Throws<ArgumentException>(() => new AirConditionerRemote("AC-01", "Điều hòa", invalidRoom!));
+    }
 }
